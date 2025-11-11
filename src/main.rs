@@ -78,7 +78,7 @@ The output must be valid JSON and nothing else.";
     },{
         "role":"user",
         "content":user_prompt
-    }]}); 
+    }],"temperature":0}); 
     let url = "http://127.0.0.1:8080/v1/chat/completions";
     let body = post_llm(url, &data).await?;
     let outer: Value = serde_json::from_str(&body)?;
@@ -121,7 +121,8 @@ The output must be valid JSON and nothing else.";
                         "role": "user",
                         "content": user_prompt
                     }
-                ]
+                ],
+                "temperature":0
             });
             
             // Call LLM to generate arguments
