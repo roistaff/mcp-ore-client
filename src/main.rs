@@ -106,6 +106,7 @@ The output must be valid JSON and nothing else.";
                 Rules:\n\
                 - Output must be only valid JSON that matches the schema\n\
                 - Do not include any explanation, commentary, or additional text\n\
+                - Do not include markdown, code blocks, or extra commentary.
                 - The JSON must be a valid object that can be used as tool arguments",
                 name, description, input_schema
             );
