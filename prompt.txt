@@ -47,3 +47,11 @@ If no tool is required, output:
 Do not include any explanation, commentary, or additional text.
 
 The output must be valid JSON and nothing else.
+
+
+
+Generate a JSON post based on input schema to call the tool with these functions:
+tool:get_alerts - Fetch current active weather alerts for the specified U.S. state.
+and Here is input_schema:
+{"properties":{"state":{"title":"State","type":"string"}},"required":["state"],"title":"get_alertsArguments","type":"object"}
+Output must be only json,Do not include any explanation, commentary, or additional text.

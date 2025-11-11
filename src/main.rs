@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
 
     // List tools
     let tools = client.list_tools(Default::default()).await?;
-    // println!("Available tools: {tools:#?}");
+    println!("Available tools: {tools:#?}");
     //
     let tool_selection_prompt = "You are an AI agent capable of calling external tools.Available tools:";
 let prompt_rules = "Rules:
@@ -63,7 +63,7 @@ If no tool is required, output:
 Do not include any explanation, commentary, or additional text.
 The output must be valid JSON and nothing else.";
     let mut available_tools = String::new();
-    for tool in tools.tools {
+    for tool in &tools.tools {
         let name = &tool.name;
         let description = tool.description.as_deref().unwrap_or("(empty string)");
         available_tools.push_str(&format!("\n{} - {}", name, description)); 
@@ -88,7 +88,65 @@ The output must be valid JSON and nothing else.";
     let inner: Value = serde_json::from_str(content)?;
     let tool_name = inner["tool_name"].as_str().unwrap_or("(missing)");
     println!("{}",tool_name);
-
+    for tool in &tools.tools {
+        let name = &tool.name;
+        if name == tool_name{
+            println!("{}",serde_json::to_string(&tool.input_schema).unwrap());
+           let description = tool.description.as_deref().unwrap_or("(empty string)");
+            let input_schema = serde_json::to_string(&tool.input_schema).unwrap();
+            
+            println!("Input schema: {}", input_schema);
+            
+            // Create system prompt for argument generation
+            let arg_gen_prompt = format!(
+                "Generate a JSON object based on the input schema to call the tool.\n\
+                Tool: {}\n\
+                Description: {}\n\
+                Input schema: {}\n\n\
+                Rules:\n\
+                - Output must be only valid JSON that matches the schema\n\
+                - Do not include any explanation, commentary, or additional text\n\
+                - The JSON must be a valid object that can be used as tool arguments",
+                name, description, input_schema
+            );
+            
+            let arg_data = serde_json::json!({
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": arg_gen_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    }
+                ]
+            });
+            
+            // Call LLM to generate arguments
+            let arg_body = post_llm(url, &arg_data).await?;
+            let arg_outer: Value = serde_json::from_str(&arg_body)?;
+            let arg_content = arg_outer["choices"][0]["message"]["content"]
+                .as_str()
+                .expect("Missing content field");
+            
+            println!("Generated arguments: {}", arg_content);
+            
+            // Parse the generated arguments
+            let arguments: Value = serde_json::from_str(arg_content)?;
+            
+            // Call the tool with generated arguments
+            let tool_result = client
+                .call_tool(CallToolRequestParam {
+                    name: name.clone(),
+                    arguments: arguments.as_object().cloned(),
+                })
+                .await?;
+            
+            println!("Tool result: {tool_result:#?}");
+            break; 
+        };
+    }
     // let tool_result = client
     //     .call_tool(CallToolRequestParam {
     //         name: "add".into(),
