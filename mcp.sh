@@ -17,7 +17,7 @@ output=$(curl -s http://localhost:8080/v1/chat/completions -H "Content-Type: app
 reasoning=$(echo "$output" | jq -r '.choices[0].message.reasoning_content')
 echo "Reasoning Content:"
 echo "$reasoning"
-content=$(echo "$output" | jq -r '.choices[0].message.tool_calls // "" ')
+content=$(echo "$output" | jq -r '.choices[0].message.content // "" ')
 echo "Content:"
 echo "$content"
 tool_calls=$(echo "$output" | jq -r '.choices[0].message.tool_calls // empty')
